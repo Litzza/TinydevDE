@@ -1,36 +1,29 @@
-[h1]Test[h1]
+====
+Getting Started
+====
+  >>> new GameEngine
 
-*Hello World*
+Then use underlining only:
 
-**Test**
+.. _header1:
+* test1
+* test2
 
-* Lorem Ipsum
 
-1. still
+Functions
+====
 
-2. testing
-
-* * some
-
-* features
-
-> test
-
-> > test test
-
->> test test
-
->>> ...test
-
-- test
-
-> test1
-
->> test2
-
->>> test3
-
->>>> test4
-
-...YES
-
+1. Player
+2. Mobs
+  
+Classes 1.1
+----
+  
+Header 1.1.1
+~~~~
+  
+Header 1.1.1.1
+""""
+   
+Objects 1.2
+----
