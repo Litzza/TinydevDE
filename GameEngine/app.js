@@ -1,8 +1,13 @@
-import EntityObject from "./EntityObject/EntityObject.class.js";
 import Scene from "./Scene/Scene.class.js";
 
 export default class GameEngine {
-    constructor(cvs, ctx) {
+    scene = new Scene();
+
+    constructor() {
+        
+        const cvs = document.createElement("canvas");
+        const ctx = cvs.getContext("2d");
+        document.body.appendChild(cvs);
 
         cvs.width = innerWidth;
         cvs.height = innerHeight;
@@ -11,12 +16,7 @@ export default class GameEngine {
             cvs.height = innerHeight;
         });
         
-        const player = new EntityObject();
-        player.scale = 0.5;
-        this.scene = new Scene();
-        this.scene.appendChild(player);
-        
-        setInterval(() => {
+        setInterval(async() => {
             this.update();
             this.render(ctx);
         }, 1000/60);

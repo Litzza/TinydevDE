@@ -20,6 +20,11 @@ export default class Position {
         return this.#__z;
     }
 
+    set(x, z){
+        this.#__x = x;
+        this.#__z = z;
+    }
+
 }
 
 /** // I should not support 3D - IT IS OVERKILL!!!!
