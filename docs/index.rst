@@ -40,9 +40,9 @@ Features
 
 Die Game-Engine bietet folgende Features:
 
-1. Ein Physic-Update alle 60 Sekunden.
+1. Ein Physic-Update 60 mal pro Sekunden.
 
-2. Ein Render-Update alle 60 Sekunden.
+2. Ein Render-Update alle 60 mal pro Sekunden.
 
 3. Eine Scene um Objekte hinzuzufügen.
 
@@ -67,3 +67,20 @@ Events
       cvs.width = innerWidth;
       cvs.height = innerHeight;
   });
+
+====
+EntityObject
+====
+
+Das EntityObject ist aktuell das Haupt-Objekt zur erzeugung von "Gegenständen" auf dem Bildschirm.
+Das Objekt besitzt viele Eigenschaften, darunter:
+
+
+.. code-block:: javascript
+
+  .id
+  .children[]
+  .position{}
+  .scale
+  .visible
+  .name
