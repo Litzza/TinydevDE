@@ -72,7 +72,7 @@ Events
 EntityObject
 ====
 
-Das EntityObject ist aktuell das Haupt-Objekt zur erzeugung von "Gegenständen" auf dem Bildschirm.
+Das EntityObject ist aktuell das Haupt-Objekt zur Erzeugung von "Gegenständen" auf dem Bildschirm.
 Das Objekt besitzt viele Eigenschaften, darunter:
 
 
