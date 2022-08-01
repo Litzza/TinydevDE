@@ -9,27 +9,31 @@ export default class GameEngine {
         const ctx = cvs.getContext("2d");
         document.body.appendChild(cvs);
 
-        cvs.width = innerWidth;
-        cvs.height = innerHeight;
+        this.init(cvs, ctx);
+
         window.addEventListener("resize", () => {
-            cvs.width = innerWidth;
-            cvs.height = innerHeight;
+            this.init(cvs, ctx);
         });
-        
+
+
         setInterval(async() => {
             this.update();
             this.render(ctx);
         }, 1000/60);
     }
 
-    update = function() {
-        
+    update() {
+        this.scene.update();
     }
     
-    render = function(ctx) {
+    render(ctx) {
         this.scene.render(ctx);
     }
 
-
+    init(cvs, ctx) {
+        cvs.width = innerWidth;
+        cvs.height = innerHeight;
+        ctx.textAlign = "center";
+    }
 
 }
