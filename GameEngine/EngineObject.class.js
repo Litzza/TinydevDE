@@ -1,19 +1,19 @@
 import Position from "./Position/Position.class.js";
-export default class EngineObject { // pls rename me - I am a child of any scene. I am the parent of any (visible) object! I am the master.class
+export default class EngineObject {
     static idCounter = 0;
-    static source = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==";
+    source = new Image();
     id = 0;
     children = [];
-    position = new Position(0, 0);
     scale = 1;
-    visible = true;
-    name = null;
-    showName = true;
     lastUpdate = Date.now();
+    showName = true;
+    name = null;
+    visible = true;
+    static source = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFhAJ/wlseKgAAAABJRU5ErkJggg==";
+    position = new Position(0, 0);
 
     constructor(src) {
         this.id = "#" + this.constructor.idCounter++;
-        this.source = new Image();
         this.source.src = src || this.constructor.source;
     }
 
@@ -33,9 +33,11 @@ export default class EngineObject { // pls rename me - I am a child of any scene
     }
 
     update() {
-        console.log("children?", this.name);
+        // first: update self
+        this.lastUpdate = Date.now();
+        this.position.update();
 
-        // update children
+        // last: update children
         for(let i = 0; i < this.children.length; i++){
             this.children[i].update();
         }
@@ -46,11 +48,14 @@ export default class EngineObject { // pls rename me - I am a child of any scene
         if(!this.visible) return;
 
         // render self
-        ctx.drawImage(this.source, this.position.x + xOffset, this.position.z + zOffset, this.source.width * this.scale, this.source.height * this.scale); // move whenever the parent moves...
+        ctx.drawImage(this.source, this.position.x + xOffset - (this.source.width/2 * this.scale), this.position.z + zOffset - this.source.height * this.scale, this.source.width * this.scale, this.source.height * this.scale); // move whenever the parent moves...
         
+        // this is the HITBOX preset:
+        ctx.strokeRect(this.position.x + xOffset - (this.source.width/2 * this.scale), this.position.z + zOffset - this.source.height * this.scale, this.source.width * this.scale, this.source.height * this.scale);
         if(this.name){
+            ctx.textAlign = "center";
             ctx.fillStyle = "white";
-            ctx.fillText(this.name, this.position.x + xOffset + (this.source.width * this.scale / 2), this.position.z + zOffset - 5, this.source.width * this.scale, this.source.height * this.scale);
+            ctx.fillText(this.name, this.position.x + xOffset, this.position.z + zOffset - 5 - this.source.height * this.scale, this.source.width * this.scale, this.source.height * this.scale);
         }
         
         // render children on top

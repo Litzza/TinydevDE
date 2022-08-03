@@ -2,6 +2,7 @@ import Scene from "./Scene/Scene.class.js";
 
 export default class GameEngine {
     scene = new Scene();
+    isPaused = false;
 
     constructor() {
         
@@ -16,7 +17,10 @@ export default class GameEngine {
         });
 
 
-        setInterval(async() => {
+        setInterval(() => {
+
+            if(this.isPaused) return false;
+
             this.update();
             this.render(ctx);
         }, 1000/60);
@@ -34,6 +38,14 @@ export default class GameEngine {
         cvs.width = innerWidth;
         cvs.height = innerHeight;
         ctx.textAlign = "center";
+    }
+
+    pause() {
+        this.isPaused = true;
+    }
+
+    resume() {
+        this.isPaused = false;
     }
 
 }

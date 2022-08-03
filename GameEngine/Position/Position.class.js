@@ -1,21 +1,26 @@
 export default class Position {
-    #needUpdate = false;
-
-    #speed = 1000/10;
-    #xDestination = 0;
-    #zDestination = 0;
+    lastUpdate = Date.now();
     #x = 0;
     #z = 0;
-    #degree = 1;
+    #xTarget = 0;
+    #zTarget = 0;
+    #movementSpeed = 100; // pixel per second
+    #stepSize = 50; // pixel movement range
+    
+    maxStamina = 1000;
+    _stamina = this.maxStamina;
+    get stamina() {
+        return this._stamina;
+    }
+    set stamina(value) {
+        this._stamina = value;
+    }
 
     constructor(x, z) {
-        this.#xDestination = x;
-        this.#zDestination = z;
         this.#x = x;
         this.#z = z;
-
-        // const p = destinationPoint(this.#x, this.#z,this.#speed, this.#degree);
-        console.log("Point:", Math.cos(this.#degree));
+        this.#xTarget = x;
+        this.#zTarget = z;
     }
 
     get x() {
@@ -31,77 +36,83 @@ export default class Position {
         return this.#z;
     }
 
-    set(x, z) {
+    get stepSize () {
+        return this.#stepSize;
+    }
+
+
+    set setMovementSpeed(value) {
+        this.#movementSpeed = value;
+    }
+
+    moveTo(x, z) { // user tool: requires stamina, movement animation
+        if(this.stamina < this.#stepSize) return false;
+        this.#xTarget = x;
+        this.#zTarget = z;
+    }
+
+    set(x, z) { // admin tool: no stamina required, instant teleport
         this.#x = x;
         this.#z = z;
-    }
-
-    setSpeed(value) {
-        this.#speed = value;
-    }
-
-    moveTo(x, z) { // interpolation for networking stuff
-        this.#xDestination = x;
-        this.#zDestination = z;
-        this.#needUpdate = true;
+        this.#xTarget = x;
+        this.#zTarget = z;
     }
 
     update() {
-        if(!this.#needUpdate) return false;
-        this.lastUpdate = Date.now();
+
         const delta = Math.min((Date.now() - this.lastUpdate) / 1000, 1);
-        const speed = delta * this.movementSpeed;
+        this.lastUpdate = Date.now();
+        const allowedTimestep = delta * this.#movementSpeed; // Position after Time(ms)
+        this.stamina = Math.min(this.stamina + allowedTimestep/4, this.maxStamina);
 
-        // this.#x;
-        
-    }
-
-    set(x, z) {
-        this.#x = x;
-        this.#z = z;
+        let xDist = this.#x - this.#xTarget;
+        let zDist = this.#z - this.#zTarget;
+        if(xDist < 0) {
+            xDist *= -1;
+        }
+        if(zDist < 0) {
+            zDist *= -1;
+        }
+        const pixelUntilFinished = Math.sqrt(Math.pow(xDist, 2) + Math.pow(zDist, 2));
+        if(pixelUntilFinished <= allowedTimestep) {
+            this.#x = this.#xTarget;
+            this.#z = this.#zTarget;
+            return; // reason: too close to destination
+        }
+        const angle = (degreeAngleBetweenTwoPoints({x: this.#x, z: this.#z}, {x: this.#xTarget, z: this.#zTarget}) - 90) * -1;
+        const pos = circleMovementPosition(this.#x, 0, this.#z, allowedTimestep, angle, 0);
+        this.#x = pos.x;
+        this.#z = pos.z;
+        this.stamina -= allowedTimestep;
     }
 
 }
 
+function circleMovementPosition (sx, sy, sz, radius = 1, yawAngle = 10, pitchAngle = 0) {
 
-  /**
-  * Returns the destination point from a given point, having travelled the given distance
-  * on the given initial bearing.
-  *
-  * @param   {number} lat - initial latitude in decimal degrees (eg. 50.123)
-  * @param   {number} lon - initial longitude in decimal degrees (e.g. -4.321)
-  * @param   {number} distance - Distance travelled (metres).
-  * @param   {number} bearing - Initial bearing (in degrees from north).
-  * @returns {array} destination point as [latitude,longitude] (e.g. [50.123, -4.321])
-  *
-  * @example
-  *     var p = destinationPoint(51.4778, -0.0015, 7794, 300.7); // 51.5135°N, 000.0983°W
-  */
-   function destinationPoint(lat, lon, distance, bearing) {
-    var radius = 6371e3; // (Mean) radius of earth
+    const x = Math.sin(degreeToRadian(yawAngle)) * Math.cos(degreeToRadian(pitchAngle));
+    const y = Math.sin(degreeToRadian(pitchAngle));
+    const z = Math.cos(degreeToRadian(yawAngle)) * Math.cos(degreeToRadian(pitchAngle));
 
-    var toRadians = function(v) { return v * Math.PI / 180; };
-    var toDegrees = function(v) { return v * 180 / Math.PI; };
+    const distance = {x:x * radius, y:y * radius, z:z * radius};
+    const newPos = {x:sx+distance.x, y:sy+distance.y, z:sz+distance.z};
+    return newPos;
+}
 
-    // sinφ2 = sinφ1·cosδ + cosφ1·sinδ·cosθ
-    // tanΔλ = sinθ·sinδ·cosφ1 / cosδ−sinφ1·sinφ2
-    // see mathforum.org/library/drmath/view/52049.html for derivation
+function degreeAngleBetweenTwoPoints (p1 = {x: 0, z: 0}, p2 = {x: 1, z: 1}) {
+    
+    // angle in radians
+    // var angleRadians = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    
+    // angle in degrees
+    var angleDeg = Math.atan2(p2.z - p1.z, p2.x - p1.x) * 180 / Math.PI;
+    return angleDeg;
+}
 
-    var δ = Number(distance) / radius; // angular distance in radians
-    var θ = toRadians(Number(bearing));
+function degreeToRadian (degree) {
+    return degree * Math.PI/180;
+}
 
-    var φ1 = toRadians(Number(lat));
-    var λ1 = toRadians(Number(lon));
-
-    var sinφ1 = Math.sin(φ1), cosφ1 = Math.cos(φ1);
-    var sinδ = Math.sin(δ), cosδ = Math.cos(δ);
-    var sinθ = Math.sin(θ), cosθ = Math.cos(θ);
-
-    var sinφ2 = sinφ1*cosδ + cosφ1*sinδ*cosθ;
-    var φ2 = Math.asin(sinφ2);
-    var y = sinθ * sinδ * cosφ1;
-    var x = cosδ - sinφ1 * sinφ2;
-    var λ2 = λ1 + Math.atan2(y, x);
-
-    return [toDegrees(φ2), (toDegrees(λ2)+540)%360-180]; // normalise to −180..+180°
- }
+function radianToDegree (radian) {
+    return radian * 180/Math.PI;
+}

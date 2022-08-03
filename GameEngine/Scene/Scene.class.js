@@ -1,17 +1,25 @@
 import EngineObject from "../EngineObject.class.js";
 export default class Scene extends EngineObject {
-
+    gravity = false;
+    gravitySpeed = 1;
     constructor() {
         super();
     }
 
     update() {
         for(let i = 0; i < this.children.length; i++){
-            this.children[i].update();
+
+            if(this.gravity) {
+                const x = this.children[i].position.x;
+                const z = this.children[i].position.z;
+                this.children[i].position.set(x, z + this.gravitySpeed);
+            }
+
+            super.update();
         }
     }
     
-    render(ctx, xOffset, zOffset) {
+    render(ctx, xOffset = 0, zOffset = 0) {
         ctx.clearRect(0, 0, innerWidth, innerHeight);
         // scenes should have a backgroud
         ctx.fillStyle = "#222222";
@@ -23,10 +31,7 @@ export default class Scene extends EngineObject {
         // render self
         ctx.drawImage(this.source, this.position.x + xOffset, this.position.z + zOffset, this.source.width * this.scale, this.source.height * this.scale); // move whenever the parent moves...
         
-        // render children on top
-        for(let i = 0; i < this.children.length; i++){
-            this.children[i].render(ctx, this.position.x, this.position.z);
-        }
+        super.render(ctx, xOffset, zOffset);
     }
 
 }
