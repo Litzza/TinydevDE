@@ -1,6 +1,6 @@
-import GameEngine from "./GameEngine/app.js"
-import EntityObject from "./GameEngine/EntityObject/EntityObject.class.js";
-import Menu from "./GameEngine/Menu/Menu.class.js";
+import GameEngine from "./GameEngine/GameEngine.js"
+import EntityObject from "./GameEngine/EngineObject/EntityObject/EntityObject.class.js";
+import Menu from "./GameEngine/EngineObject/Menu/Menu.class.js";
 window.addEventListener("load", () => {
 
     const game = new GameEngine();
@@ -10,7 +10,7 @@ window.addEventListener("load", () => {
     // player0.scale = 0.5; // das Bild war etwas zu groß^^
     player0.position.set(200, 200);
     player0.setName("Player");
-    player0.addController(); // "WASD"-Movement aktivieren...
+    player0.addKeyMovementController(); // "WASD"-Movement aktivieren...
     // player0.removeController(); // "WASD"-Movement deaktivieren...
     game.scene.appendChild(player0);
 
@@ -26,7 +26,7 @@ window.addEventListener("load", () => {
     menu0.position.set(100, 10);
     game.scene.appendChild(menu0);
     game.scene.appendChild(menu0);
-    
+
     const menu1 = new Menu(Menu.TYPE.H_PROGRESS, player0.position, "stamina", "maxStamina");
     menu1.position.set(100, 40);
     game.scene.appendChild(menu1);
