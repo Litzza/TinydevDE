@@ -1,9 +1,0 @@
-{
-    "mobSpawnLevelMin":1,
-    "mobSpawnLevelMax":10,
-    "mobReachLevelLimit":100,
-    "nextLevel":1000,
-    "nextLevelMultiplier":2,
-    "mobChildLevelAdoptionType":{"value":"PercentageFromAverage", "options":["PercentageFromLowestParent", "PercentageFromHighestParent", "PercentageFromAverage", "PercentageFromLowestParent", "PercentageFromHighestParent", "PercentageFromSameGender", "RandomBetweenBothParents", "PercentageFromRandomBetweenBothParents"]},
-    "mobChildLevelAdoptionPercentage": 1
-}
