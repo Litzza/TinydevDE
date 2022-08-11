@@ -6,9 +6,11 @@ export default class Position {
     #zTarget = 0;
     #movementSpeed = 100; // pixel per second
     #stepSize = 50; // pixel movement range
-    
+    #isMoving = false;
+
     maxStamina = 1000;
     _stamina = this.maxStamina;
+    needStamina = false;
     get stamina() {
         return this._stamina;
     }
@@ -46,7 +48,9 @@ export default class Position {
     }
 
     moveTo(x, z) { // user tool: requires stamina, movement animation
-        if(this.stamina < this.#stepSize) return false;
+        if(this.needStamina && this.stamina < this.#stepSize) return false;
+        if(this.#isMoving) return false;
+        this.#isMoving = true;
         this.#xTarget = x;
         this.#zTarget = z;
     }
@@ -58,13 +62,28 @@ export default class Position {
         this.#zTarget = z;
     }
 
-    update() {
-
+    update(parent) {
+        // calculate 'time'
         const delta = Math.min((Date.now() - this.lastUpdate) / 1000, 1);
         this.lastUpdate = Date.now();
-        const allowedTimestep = delta * this.#movementSpeed; // Position after Time(ms)
-        this.stamina = Math.min(this.stamina + allowedTimestep/4, this.maxStamina);
 
+        // calculate 'scale' from time
+        const allowedTimestep = delta * this.#movementSpeed; // Position after Time(ms)
+
+        
+        if(this.needStamina){
+            // regenerate 'stamina' based on calculated scale from time
+            // this.stamina = Math.min(this.stamina + allowedTimestep/4, this.maxStamina);
+            // get stamina whenever standing still:
+            if(!this.#isMoving) {
+                this.stamina = Math.min(this.stamina + allowedTimestep, this.maxStamina);
+            }
+        }
+
+        // only allow updates from registered moves, e.g.: this.moveTo();
+        if(!this.#isMoving) return false;
+
+        // calculate 'distance' to target
         let xDist = this.#x - this.#xTarget;
         let zDist = this.#z - this.#zTarget;
         if(xDist < 0) {
@@ -73,17 +92,26 @@ export default class Position {
         if(zDist < 0) {
             zDist *= -1;
         }
-        const pixelUntilFinished = Math.sqrt(Math.pow(xDist, 2) + Math.pow(zDist, 2));
+
+        // calculate 'step_size' based on distance
+        const pixelUntilFinished = Math.sqrt(Math.pow(xDist, 2) + Math.pow(zDist, 2)); // a²+b²=c² ; c² = step_size
         if(pixelUntilFinished <= allowedTimestep) {
             this.#x = this.#xTarget;
             this.#z = this.#zTarget;
+            this.#isMoving = false;
             return; // reason: too close to destination
         }
+
+        // calculate 'new_position' based on 'distance'
         const angle = (degreeAngleBetweenTwoPoints({x: this.#x, z: this.#z}, {x: this.#xTarget, z: this.#zTarget}) - 90) * -1;
         const pos = circleMovementPosition(this.#x, 0, this.#z, allowedTimestep, angle, 0);
         this.#x = pos.x;
         this.#z = pos.z;
-        this.stamina -= allowedTimestep;
+
+        if(this.needStamina) {
+            // reduce 'stamina'
+            this.stamina -= allowedTimestep;
+        }
     }
 
 }

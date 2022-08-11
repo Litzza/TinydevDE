@@ -1,38 +1,18 @@
-import Node2D from "../Node2D.class.js";
+import Menu from "../Menu.class.js";
 
-export default class Menu extends Node2D {
-    _child = null;
-    _value = 100;
-    width = 100;
-    height = 20;
-    showValue = false;
-    staticPosition = true;
-    gravity = false;
-
-    backgroundColor = "black";
-    valueColor = "orange";
-    
-    constructor(child = null, valueAttrName = null) {
+export default class Button extends Menu {
+    onclick = null;
+    constructor(valueAttrName, callback = () => {console.warn("You created this button without overriding the callback function!!");}) {
         super();
-        this._child = child;
+        this._child = this;
         this._value = valueAttrName;
+        this.onclick = callback;
     }
 
     get displayText() {
-        return this.value;
+        return this._value;
     }
 
-    setSize(w, h) {
-        this.width = w;
-        this.height = h;
-    }
-
-    get value() {
-        if(typeof this._child[this._value] == "number") {
-            return Math.floor(this._child[this._value]);
-        }
-        return this._child[this._value];
-    }
     renderStatic(ctx, xOffset = 0, zOffset = 0, width = 0, height = 0) {
         const point = this.getStaticHitboxPoints();
         
@@ -51,7 +31,7 @@ export default class Menu extends Node2D {
         ctx.fillStyle = "white";
         ctx.textAlign = "center"; // text value
         if(this.showValue) {
-            ctx.fillText(this._value + ": " + this.displayText, point.topCenter.x, point.topCenter.z + this.height/2 + 3);
+            ctx.fillText(this.displayText, point.topCenter.x, point.topCenter.z + this.height/2 + 3);
         }
     }
 
@@ -70,7 +50,7 @@ export default class Menu extends Node2D {
         ctx.fillStyle = "white";
         ctx.textAlign = "center"; // text value
         if(this.showValue) {
-            ctx.fillText(this._value + ": " + this.displayText, point.topCenter.x, point.topCenter.z + this.height/2 + 3);
+            ctx.fillText(this.displayText, point.topCenter.x, point.topCenter.z + this.height/2 + 3);
         }
     }
     

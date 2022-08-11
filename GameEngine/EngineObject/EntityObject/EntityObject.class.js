@@ -1,6 +1,6 @@
-import EngineObject from "../EngineObject.class.js";
+import Node2D from "../Node2D.class.js";
 import Position from "../Position/Position.class.js";
-export default class EntityObject extends EngineObject { // Creatures & Plants
+export default class EntityObject extends Node2D { // Creatures & Plants
     isEntity = true;
     experience = 0;
     level = this.experience / 1000;
@@ -13,13 +13,7 @@ export default class EntityObject extends EngineObject { // Creatures & Plants
     respawnCooldown = 10 * 1000; //     10s
     respawnPoint = new Position(0, 0);
     gender = null;
-    keyConfig = {
-        MOVE_UP:"W",
-        MOVE_LEFT:"A",
-        MOVE_DOWN:"S",
-        MOVE_RIGHT:"D"
-    };
-    actionPressed = {...this.keyConfig};
+
     dropTable = [{type:"EXPERIENCE", db_id: 1, amount: 1}, {type:"CURRENCY", db_id: 1, amount: 1}, {type:"ITEM", db_id: 1, amount: 1}];
 
     constructor() {
@@ -31,6 +25,17 @@ export default class EntityObject extends EngineObject { // Creatures & Plants
     onDeath() {
         this.respawn(); // or better: showDeathMenu(); then: button -> respawn(); ??
     }
+
+    onclick(event) {
+        console.log("[" + this.name + "]: Aua!");
+        return;
+    }
+
+    // get onClick() {
+    //     return (event) => {
+            
+    //     }
+    // }
 
     respawn() {
         this.hp = this.maxHp;
@@ -47,29 +52,7 @@ export default class EntityObject extends EngineObject { // Creatures & Plants
         respawnPoint.set(x, z);
     }
 
-    update() {
-        let x = 0;
-        let z = 0;
-
-        if(this.actionPressed.MOVE_UP === true) {
-            z -= this.position.stepSize;
-        }
-        
-        if(this.actionPressed.MOVE_LEFT === true) {
-            x -= this.position.stepSize;
-        }
-        
-        if(this.actionPressed.MOVE_DOWN === true) {
-            z += this.position.stepSize;
-        }
-        
-        if(this.actionPressed.MOVE_RIGHT === true) {
-            x += this.position.stepSize;
-        }
-
-        if(x || z) {
-            this.position.moveTo(this.position.x + x, this.position.z + z);
-        }
+    update(parent) {
 
         super.update();
     }
@@ -78,56 +61,6 @@ export default class EntityObject extends EngineObject { // Creatures & Plants
         // this.position.
     }
 
-    
-    keyDown = function(event) {
 
-        const key = event.key.toUpperCase();
-            
-        if(key === this.keyConfig.MOVE_UP) {
-            this.actionPressed.MOVE_UP = true;
-        }
-        
-        if(key === this.keyConfig.MOVE_LEFT) {
-            this.actionPressed.MOVE_LEFT = true;
-        }
-        
-        if(key === this.keyConfig.MOVE_DOWN) {
-            this.actionPressed.MOVE_DOWN = true;
-        }
-        
-        if(key === this.keyConfig.MOVE_RIGHT) {
-            this.actionPressed.MOVE_RIGHT = true;
-        }
-    }.bind(this);
 
-    keyUp = function(event) {
-        const key = event.key.toUpperCase();
-            
-        if(key === this.keyConfig.MOVE_UP) {
-            this.actionPressed.MOVE_UP = false;
-        }
-        
-        if(key === this.keyConfig.MOVE_LEFT) {
-            this.actionPressed.MOVE_LEFT = false;
-        }
-        
-        if(key === this.keyConfig.MOVE_DOWN) {
-            this.actionPressed.MOVE_DOWN = false;
-        }
-        
-        if(key === this.keyConfig.MOVE_RIGHT) {
-            this.actionPressed.MOVE_RIGHT = false;
-        }
-    }.bind(this);
-    
-    addKeyMovementController(controller) {
-
-        addEventListener("keydown", this.keyDown);
-        addEventListener("keyup", this.keyUp);
-    }
-
-    removeKeyMovementController() {
-        window.removeEventListener("keydown", this.keyDown);
-        window.removeEventListener("keyup", this.keyUp);
-    }
 }
