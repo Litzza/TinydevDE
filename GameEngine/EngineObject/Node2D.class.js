@@ -2,26 +2,31 @@ import GameEngine from "../GameEngine.js";
 import Position from "./Position/Position.class.js";
 export default class Node2D {
     gravity = false;
-    gravitySpeed = 1;
+    gravitySpeed = 9;
     static idCounter = 0;
+    backgroundImage = new Image();
+    backgroundColor = "#ffffff00";
     source = new Image();
     id = 0;
     children = [];
     scale = 1;
     lastUpdate = Date.now();
-    showName = true;
-    showHitbox = false;
+    showName = false;
+    showHitbox = true;
     collision = false;
     name = null;
     visible = true;
     static source = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
     position = new Position(0, 0);
+    positionBeforeFight = this.position;
     // collision = false; //... todo
     staticPosition = false;
     viewport = {x: 0, z: 0};
+    actionPressed = {...this.keyConfig};
 
     constructor() {
         this.id = "#" + this.constructor.idCounter++;
+        this.backgroundImage.src = this.constructor.source;
         this.source.src = this.constructor.source;
     }
 
@@ -45,6 +50,7 @@ export default class Node2D {
     }
 
     update(parent) {
+
         let x = 0;
         let z = 0;
 
@@ -70,12 +76,6 @@ export default class Node2D {
         
         // first: update self
         
-        // gravity:
-        if(this.gravity) {
-            const x = this.position.x;
-            const z = this.position.z;
-            this.position.set(x, z + this.gravitySpeed);
-        }
 
         this.lastUpdate = Date.now();
         this.position.update();
@@ -84,11 +84,20 @@ export default class Node2D {
         // last: update children
         for(let i = 0; i < this.children.length; i++){
 
-
+        // gravity affects only the children inside the object:
+        if(this.gravity && !this.children[i].staticPosition) {
+            const x = this.children[i].position.x;
+            const z = this.children[i].position.z;
+            this.children[i].position.set(x, z + this.gravitySpeed);
+        }
             this.children[i].update();
         }
     }
 
+    setSize(w, h) {
+        this.source.width = w;
+        this.source.height = h;
+    }
     get width() {
         return this.source.width * this.scale;
     }
@@ -97,99 +106,12 @@ export default class Node2D {
         return this.source.height * this.scale;
     }
 
-    getStaticHitboxPoints() {
-        return {
-            topLeft: {x: this.position.x - this.width/2, z:this.position.z - this.height/2},
-            topRight: {x: this.position.x + this.width/2, z:this.position.z - this.height/2},
-            bottomLeft: {x: this.position.x - this.width/2, z:this.position.z + this.height/2},
-            bottomRight: {x: this.position.x + this.width/2, z:this.position.z + this.height/2},
-
-            topCenter: {x: this.position.x, z: this.position.z - this.height/2},
-            leftCenter: {x: this.position.x - this.width/2, z: this.position.z},
-            rightCenter: {x: this.position.x + this.width/2, z: this.position.z},
-            bottomCenter: {x: this.position.x, z: this.position.z + this.height/2}
-        }
-    }
-
-    getDynamicHitboxPoints(xOffset, zOffset, width, height) {
-        return {
-            topLeft: {x: this.position.x + xOffset + width/2 - this.width/2, z:this.position.z + zOffset + height/2 - this.height/2},
-            topRight: {x: this.position.x + xOffset + width/2 + this.width/2, z:this.position.z + zOffset + height/2 - this.height/2},
-            bottomLeft: {x: this.position.x + xOffset + width/2 - this.width/2, z:this.position.z + zOffset + height/2 + this.height/2},
-            bottomRight: {x: this.position.x + xOffset + width/2 + this.width/2, z:this.position.z + zOffset + height/2 + this.height/2},
-
-            centerCenter: {x: this.position.x + xOffset + width/2, z: this.position.z + zOffset + height/2},
-
-            topCenter: {x: this.position.x + xOffset + width/2, z: this.position.z + zOffset + height/2 - this.height/2},
-            leftCenter: {x: this.position.x + xOffset + width/2 - this.width/2, z: this.position.z + height/2 + zOffset},
-            rightCenter: {x: this.position.x + xOffset + width/2 + this.width/2, z: this.position.z + height/2 + zOffset},
-            bottomCenter: {x: this.position.x + xOffset + width/2, z: this.position.z + zOffset + height/2 + this.height/2}
-        }
-    }
-
-    renderStatic(ctx, xOffset = 0, zOffset = 0, width = 0, height = 0) {
-
-        const point = this.getStaticHitboxPoints();
-
-        // render self
-        ctx.drawImage(this.source, point.topLeft.x, point.topLeft.z, this.width, this.height); // move whenever the parent moves...
-     
-        // this is the HITBOX preset:
-        if(this.showHitbox) {
-            ctx.strokeRect(point.topLeft.x, point.topLeft.z, this.width, this.height);
-        }
-        // ctx.strokeRect(this.position.x, this.position.z, this.width, this.height);
-     
-        // render name
-        if(this.name) {
-            ctx.textAlign = "center";
-            ctx.fillStyle = "white";
-            ctx.fillText(this.name, point.topCenter.x, point.topCenter.z - 10); // , this.width, this.height
-        }
-        
-        // render children
-        for(let i = 0; i < this.children.length; i++){
-            this.children[i].render(ctx, point.topLeft.x, point.topLeft.z, this.width, this.height);
-        }
-    }
-
-    renderDynamic(ctx, xOffset = 0, zOffset = 0, width = 0, height = 0) {
-
-        const point = this.getDynamicHitboxPoints(xOffset, zOffset, width, height);
-
-        // render self
-        ctx.drawImage(this.source, point.topLeft.x, point.topLeft.z, this.width, this.height); // move whenever the parent moves...
-     
-        // this is the HITBOX preset:
-        if(this.showHitbox) {
-            ctx.strokeRect(point.topLeft.x, point.topLeft.z, this.width, this.height);
-        }
-
-        // render name
-        if(this.name) {
-            ctx.textAlign = "center";
-            ctx.fillStyle = "white";
-            ctx.fillText(this.name, point.topCenter.x, point.topCenter.z - 10); // , this.width, this.height
-        }
-        
-        // render children
-        for(let i = 0; i < this.children.length; i++){
-            this.children[i].render(ctx, point.topLeft.x + this.viewport.x, point.topLeft.z + this.viewport.z, this.width, this.height);
-        }
-    }
-
-    render(ctx, xOffset = 0, zOffset = 0, width = 0, height = 0) { // ctx, {xOffset, zOffset} = {parentPosition.x, parentPosition.z}
-        // visibility does apply to self and children
-        if(!this.visible) return;
-        if(this.staticPosition) {
-            this.renderStatic(ctx, xOffset, zOffset, width, height);
-        } else {
-            this.renderDynamic(ctx, xOffset, zOffset, width, height);
-        }
-    }
-
     setImage(src){
         this.source.src = src || this.constructor.source;
+    }
+
+    setBackgroundImage(src){
+        this.backgroundImage.src = src || this.constructor.source;
     }
 
     setName(name){
@@ -220,36 +142,52 @@ export default class Node2D {
     onclick() {
         return;
     }
-    clickHandler = function(event, callback) { // scene should have that too maybe? since i only want to move the scene with drag and drop (but: maybe drag only the player's position too, this would indeed be handled HERE)
+    clickHandler = function(event, parent, callback) { // scene should have that too maybe? since i only want to move the scene with drag and drop (but: maybe drag only the player's position too, this would indeed be handled HERE)
         //_padding: viewport // this will maybe help me understand the logic later on, ignore this on staticObjects
         //__margin: position // this will maybe help me understand the logic later on
         // console.log("DOWN", event.clientX, event.clientY);
-        const parent = GameEngine.scene;
-        for(let i = 0; i < GameEngine.scene.children.length; i++){
-        // for(let i = 0; i < this.children.length; i++){
-            
-            // const parent = this;
-            const obj = GameEngine.scene.children[i];
 
-            // const obj = this.children[i];
+        console.log("click handler for", this.name);
+
+        for(let i = 0; i < parent.children.length; i++){
+            const obj = parent.children[i];
+
+            if(!obj.visible) continue; // we cant see it, so we dont want it!
+
+            // console.log("click handler for", obj.name);
+
             if(obj.staticPosition) {
-                const point = obj.getStaticHitboxPoints();
-                if(event.clientX >= point.topLeft.x && event.clientX <= point.bottomRight.x && event.clientY >= point.topLeft.z && event.clientY <= point.bottomRight.z){
-                    console.log("HIT Static Object,", "insideSelf: [true|false]", obj);
-                    obj.onclick();
-                    callback(event, obj);
-                }
-            } else {
-                const point = obj.getDynamicHitboxPoints(parent.position.x - parent.width/2 * parent.scale, parent.position.z - parent.height/2 * parent.scale, parent.width * parent.scale, parent.height * parent.scale);
-                if(event.clientX - parent.width/2 * parent.scale >= point.topLeft.x && event.clientX - parent.width/2 * parent.scale <= point.bottomRight.x && event.clientY - parent.height/2 * parent.scale >= point.topLeft.z && event.clientY - parent.height/2 * parent.scale <= point.bottomRight.z){
-                    console.log("HIT Dynamic Object,", "insideSelf: [true|false]", obj);
-                    obj.onclick();
-                    callback(event, obj);
-                }
+                console.log("CLICK? [STATIC] object ...");
+                
             }
+
+            if(!obj.staticPosition) {
+                console.log("CLICK? [DYNAMIC] object ...");
+            }
+
+
+            // if(obj.staticPosition) {
+            //     const point = obj.getStaticHitboxPoints(parent.position.x * parent.scale, parent.position.z * parent.scale);
+            //     if(event.clientX >= point.topLeft.x && event.clientX <= point.bottomRight.x && event.clientY >= point.topLeft.z && event.clientY <= point.bottomRight.z){
+            //         // console.log("HIT Static Object,", "insideSelf: [true|false]", obj);
+            //         obj.onclick();
+            //         obj.clickHandler(event, this, callback);
+            //         callback(event, obj);
+            //     } else {
+            //         console.log(event.clientX, point.topLeft.x, point);
+            //     }
+            // } else {
+            //     const point = obj.getDynamicHitboxPoints(parent.position.x - parent.width/2 * parent.scale, parent.position.z - parent.height/2 * parent.scale, parent.width * parent.scale, parent.height * parent.scale);
+            //     if(event.clientX - parent.width/2 * parent.scale >= point.topLeft.x && event.clientX - parent.width/2 * parent.scale <= point.bottomRight.x && event.clientY - parent.height/2 * parent.scale >= point.topLeft.z && event.clientY - parent.height/2 * parent.scale <= point.bottomRight.z){
+            //         // console.log("HIT Dynamic Object,", "insideSelf: [true|false]", obj);
+            //         obj.onclick();
+            //         obj.clickHandler(event, this, callback);
+            //         callback(event, obj);
+            //     }
+            // }
         }
         // if there was no object found, i should just return the position inside the clicked scene
-        console.log("parent position... pls work here...", parent.position);
+        // console.log("parent position... pls work here...", parent.position);
 
 
     }.bind(this);
@@ -262,7 +200,7 @@ export default class Node2D {
     addMousePointerEvent(callback = (event, targetObject) => { console.log("click event triggered", event, obj); }) {
         // workaround:
         const fx = function(event) {
-            this.clickHandler(event, callback);
+            this.clickHandler(event, this, callback);
         }.bind(this);
 
         addEventListener("click", fx);
@@ -309,7 +247,6 @@ export default class Node2D {
         this.keyConfig = {...this.keyConfig} || {...keyConfig}
     }
 
-    actionPressed = {...this.keyConfig};
     keyDown = function(event) {
 
         const key = event.key.toUpperCase();
@@ -360,6 +297,96 @@ export default class Node2D {
     removeKeyMovementController() {
         removeEventListener("keydown", this.keyDown);
         removeEventListener("keyup", this.keyUp);
+    }
+
+    getStaticHitboxPoints(xOffset, zOffset) {
+        return {
+            topLeft: {x: this.position.x + xOffset - this.width/2, z:this.position.z + zOffset - this.height/2},
+            topRight: {x: this.position.x + xOffset + this.width/2, z:this.position.z + zOffset - this.height/2},
+            bottomLeft: {x: this.position.x + xOffset - this.width/2, z:this.position.z + zOffset + this.height/2},
+            bottomRight: {x: this.position.x + xOffset + this.width/2, z:this.position.z + zOffset + this.height/2},
+
+            centerCenter: {x: this.position.x + xOffset, z: this.position.z + zOffset},
+
+            topCenter: {x: this.position.x + xOffset, z: this.position.z + zOffset - this.height/2},
+            leftCenter: {x: this.position.x + xOffset - this.width/2, z: this.position.z + zOffset},
+            rightCenter: {x: this.position.x + xOffset + this.width/2, z: this.position.z + zOffset},
+            bottomCenter: {x: this.position.x + xOffset, z: this.position.z + zOffset + this.height/2}
+        }
+    }
+
+    // static ...
+    // x: +  - 
+
+    // dynamic ...
+    // x: + xOffset + width/2,
+
+
+    getDynamicHitboxPoints(xOffset, zOffset, width, height) {
+        return {
+            topLeft: {x: this.position.x + xOffset + width/2 - this.width/2, z:this.position.z + zOffset + height/2 - this.height/2},
+            topRight: {x: this.position.x + xOffset + width/2 + this.width/2, z:this.position.z + zOffset + height/2 - this.height/2},
+            bottomLeft: {x: this.position.x + xOffset + width/2 - this.width/2, z:this.position.z + zOffset + height/2 + this.height/2},
+            bottomRight: {x: this.position.x + xOffset + width/2 + this.width/2, z:this.position.z + zOffset + height/2 + this.height/2},
+
+            centerCenter: {x: this.position.x + xOffset + width/2, z: this.position.z + zOffset + height/2},
+
+            topCenter: {x: this.position.x + xOffset + width/2, z: this.position.z + zOffset + height/2 - this.height/2},
+            leftCenter: {x: this.position.x + xOffset + width/2 - this.width/2, z: this.position.z + height/2 + zOffset},
+            rightCenter: {x: this.position.x + xOffset + width/2 + this.width/2, z: this.position.z + height/2 + zOffset},
+            bottomCenter: {x: this.position.x + xOffset + width/2, z: this.position.z + zOffset + height/2 + this.height/2}
+        }
+    }
+
+    renderHitbox(ctx, point) {
+        if(!this.showHitbox) return;
+        ctx.strokeStyle = "white";
+        ctx.strokeRect(point.topLeft.x, point.topLeft.z, this.width, this.height);
+    }
+
+    renderBackgroundColor(ctx, point) {
+        ctx.fillStyle = this.backgroundColor; // rect background
+        ctx.fillRect(point.topLeft.x, point.topLeft.z, this.width, this.height); // background color
+    }
+
+    renderBackgroundImage(ctx, point) {
+        ctx.drawImage(this.backgroundImage, point.topLeft.x, point.topLeft.z, this.width, this.height); // background image
+    }
+
+    renderImage(ctx, point) {
+        // render background, then self
+        ctx.drawImage(this.source, point.topLeft.x, point.topLeft.z, this.width, this.height); // main image
+    }
+
+    renderName(ctx, point) {
+        if(!this.name) return;
+        ctx.textAlign = "center";
+        ctx.fillStyle = "white";
+        ctx.fillText(this.name + " " + this.id, point.topCenter.x, point.topCenter.z - 10); // , this.width, this.height
+    }
+
+
+    render(ctx, parentPointTopLeftX, parentPointTopLeftZ, parentNodeWidth, parentNodeHeight) {
+        if(!this.visible) return;
+        let point = null;
+        if(this.staticPosition) {
+            point = this.getStaticHitboxPoints(parentPointTopLeftX, parentPointTopLeftZ);
+        } else {
+            point = this.getDynamicHitboxPoints(parentPointTopLeftX, parentPointTopLeftZ, parentNodeWidth, parentNodeHeight);
+        }
+        this.renderBackgroundColor(ctx, point);
+        this.renderBackgroundImage(ctx, point);
+        this.renderHitbox(ctx, point);
+        this.renderImage(ctx, point);
+        this.renderName(ctx, point);
+        
+        ctx.fillStyle = "green";
+        ctx.fillRect(point.topLeft.x, point.topLeft.z, 5, 5);
+
+        // render children
+        for(let i = 0; i < this.children.length; i++){
+            this.children[i].render(ctx, point.topLeft.x, point.topLeft.z, this.width, this.height);
+        }
     }
 }
 

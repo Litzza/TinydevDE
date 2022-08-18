@@ -5,11 +5,13 @@ export default class Scene extends Node2D {
     }
 
     update() {
-        for(let i = 0; i < this.children.length; i++){
+        // for(let i = 0; i < this.children.length; i++){
 
 
-            super.update();
-        }
+        //     this.children[i].update();
+        // }
+
+        super.update();
     }
 
     get width() {
@@ -20,7 +22,7 @@ export default class Scene extends Node2D {
         return innerHeight;
     }
     
-    render(ctx) {
+    render(ctx, xOffset, zOffset) {
         ctx.clearRect(0, 0, innerWidth, innerHeight);
         // visibility: does apply to self and children - obviously not the parents, lol
         if(!this.visible) return;
@@ -28,7 +30,7 @@ export default class Scene extends Node2D {
         // scenes should have a backgroud ( if visible ;) )
         ctx.fillStyle = "#222222";
         ctx.fillRect(this.position.x, this.position.z, this.width, this.height);
-        super.render(ctx, 0, 0, innerWidth, innerHeight); // mouseDragEvent als MouseController einbinden (ähnlich wie beim KeyController vom Spieler): NONE(), OuterPositionDrag(Items), InnerPositionDrag(Scene)
+        super.render(ctx, this.position.x, this.position.z, innerWidth, innerHeight); // mouseDragEvent als MouseController einbinden (ähnlich wie beim KeyController vom Spieler): NONE(), OuterPositionDrag(Items), InnerPositionDrag(Scene)
     }
 
 }

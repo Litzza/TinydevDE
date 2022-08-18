@@ -5,6 +5,7 @@ export default class Position {
     #xTarget = 0;
     #zTarget = 0;
     #movementSpeed = 100; // pixel per second
+    #staminaRegenerationRate = 100; // regenerate stamina per second
     #stepSize = 50; // pixel movement range
     #isMoving = false;
 
@@ -62,6 +63,19 @@ export default class Position {
         this.#zTarget = z;
     }
 
+    regenerate(delta) {
+        const timeBasedStaminaRegenRate = delta * this.#staminaRegenerationRate; // Position after Time(ms)
+        
+        if(this.needStamina){
+            // regenerate 'stamina' based on calculated scale from time
+            // this.stamina = Math.min(this.stamina + allowedTimestep/4, this.maxStamina);
+            // get stamina whenever standing still:
+            if(!this.#isMoving) {
+                this.stamina = Math.min(this.stamina + timeBasedStaminaRegenRate, this.maxStamina);
+            }
+        }
+    }
+
     update(parent) {
         // calculate 'time'
         const delta = Math.min((Date.now() - this.lastUpdate) / 1000, 1);
@@ -70,15 +84,7 @@ export default class Position {
         // calculate 'scale' from time
         const allowedTimestep = delta * this.#movementSpeed; // Position after Time(ms)
 
-        
-        if(this.needStamina){
-            // regenerate 'stamina' based on calculated scale from time
-            // this.stamina = Math.min(this.stamina + allowedTimestep/4, this.maxStamina);
-            // get stamina whenever standing still:
-            if(!this.#isMoving) {
-                this.stamina = Math.min(this.stamina + allowedTimestep, this.maxStamina);
-            }
-        }
+        this.regenerate(delta);
 
         // only allow updates from registered moves, e.g.: this.moveTo();
         if(!this.#isMoving) return false;
