@@ -1,8 +1,8 @@
 import Node2D from "../Node2D.class.js";
 
 export default class Menu extends Node2D {
-    _child = null;
-    _value = 100;
+    _child = null; // # hook
+    _value = 100; // # hook
     width = 100;
     height = 20;
     showName = false;

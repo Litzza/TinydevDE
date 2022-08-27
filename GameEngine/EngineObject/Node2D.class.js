@@ -30,6 +30,10 @@ export default class Node2D {
         this.source.src = this.constructor.source;
     }
 
+    getName() {
+        return this.name || this.constructor.name;
+    }
+
     getChildById(id) {
         for(let i = 0; i < this.children.length; i++){
             
@@ -142,33 +146,69 @@ export default class Node2D {
     onclick() {
         return;
     }
-    clickHandler = function(event, parent, callback) { // scene should have that too maybe? since i only want to move the scene with drag and drop (but: maybe drag only the player's position too, this would indeed be handled HERE)
+    clickHandler = function(event, callback, parent = GameEngine.scene, xOffset = GameEngine.scene.position.x, zOffset = GameEngine.scene.position.z) { // scene should have that too maybe? since i only want to move the scene with drag and drop (but: maybe drag only the player's position too, this would indeed be handled HERE)
         //_padding: viewport // this will maybe help me understand the logic later on, ignore this on staticObjects
         //__margin: position // this will maybe help me understand the logic later on
         // console.log("DOWN", event.clientX, event.clientY);
 
-        console.log("click handler for", this.name);
+        console.warn("[CLICK] handler for", this.name + ":");
+
+        console.debug({xOffset, zOffset});
+
+        // we have to start from the scene, to calculate the x- and zOffset, since we can NOT KNOW ABOUT IT AT ALL.
+        // parent = GameEngine.scene
+
+
+        // if(parent.staticPosition) {
+        //     let xOffset = parent.position.x;
+        //     let zOffset = parent.position.z;
+        // } else {
+        //     let xOffset = parent.position.x + parent.width/2;
+        //     let zOffset = parent.position.z + parent.height/2;
+        // }
 
         for(let i = 0; i < parent.children.length; i++){
             const obj = parent.children[i];
-
+            // 
             if(!obj.visible) continue; // we cant see it, so we dont want it!
 
-            // console.log("click handler for", obj.name);
 
             if(obj.staticPosition) {
-                console.log("CLICK? [STATIC] object ...");
+                console.info("[CHILD][STATIC]:", obj.getName());
+                const point = obj.getStaticHitboxPoints(xOffset, zOffset);
+
+                // # Hitbox check for STATIC objects:
+                if(event.clientX >= point.topLeft.x && event.clientX <= point.bottomRight.x && event.clientY >= point.topLeft.z && event.clientY <= point.bottomRight.z) {
+                    obj.clickHandler(event, callback, obj, point.topLeft.x, point.topLeft.z);
+                    obj.onclick();
+                }
                 
             }
 
             if(!obj.staticPosition) {
-                console.log("CLICK? [DYNAMIC] object ...");
+                console.info("[CHILD][DYNAMIC]:", obj.getName());
+                const point = obj.getDynamicHitboxPoints(xOffset, zOffset, parent.width, parent.height);
+
+                // # Hitbox check for STATIC objects:
+                if(event.clientX >= point.topLeft.x && event.clientX <= point.bottomRight.x && event.clientY >= point.topLeft.z && event.clientY <= point.bottomRight.z){
+                    obj.clickHandler(event, callback, obj, point.topLeft.x, point.topLeft.z);
+                    obj.onclick();
+                }
             }
+
+            
+
+
+
+                // localPoints = obj.getStaticHitboxPoints(xOffset, zOffset);
+                // if(localPoints.topLeft.x > ) {
+
+                // }
 
 
             // if(obj.staticPosition) {
             //     const point = obj.getStaticHitboxPoints(parent.position.x * parent.scale, parent.position.z * parent.scale);
-            //     if(event.clientX >= point.topLeft.x && event.clientX <= point.bottomRight.x && event.clientY >= point.topLeft.z && event.clientY <= point.bottomRight.z){
+            //     if(event.clientX >= point.topLeft.x && event.clientX <= point.bottomRight.x && event.clientY >= point.topLeft.z && event.clientY <= point.bottomRight.z) {
             //         // console.log("HIT Static Object,", "insideSelf: [true|false]", obj);
             //         obj.onclick();
             //         obj.clickHandler(event, this, callback);
@@ -200,7 +240,8 @@ export default class Node2D {
     addMousePointerEvent(callback = (event, targetObject) => { console.log("click event triggered", event, obj); }) {
         // workaround:
         const fx = function(event) {
-            this.clickHandler(event, this, callback);
+            console.clear();
+            this.clickHandler(event, callback);
         }.bind(this);
 
         addEventListener("click", fx);
@@ -366,13 +407,13 @@ export default class Node2D {
     }
 
 
-    render(ctx, parentPointTopLeftX, parentPointTopLeftZ, parentNodeWidth, parentNodeHeight) {
+    render(ctx, xOffset, zOffset, parentWidth, parentHeight) {
         if(!this.visible) return;
         let point = null;
         if(this.staticPosition) {
-            point = this.getStaticHitboxPoints(parentPointTopLeftX, parentPointTopLeftZ);
+            point = this.getStaticHitboxPoints(xOffset, zOffset);
         } else {
-            point = this.getDynamicHitboxPoints(parentPointTopLeftX, parentPointTopLeftZ, parentNodeWidth, parentNodeHeight);
+            point = this.getDynamicHitboxPoints(xOffset, zOffset, parentWidth, parentHeight);
         }
         this.renderBackgroundColor(ctx, point);
         this.renderBackgroundImage(ctx, point);
@@ -381,7 +422,7 @@ export default class Node2D {
         this.renderName(ctx, point);
         
         ctx.fillStyle = "green";
-        ctx.fillRect(point.topLeft.x, point.topLeft.z, 5, 5);
+        ctx.fillRect(point.topLeft.x, point.topLeft.z, 5, 5); // DEBUG POINT
 
         // render children
         for(let i = 0; i < this.children.length; i++){

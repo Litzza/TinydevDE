@@ -8,9 +8,10 @@ import Scene from "./GameEngine/EngineObject/Scene/Scene.class.js";
 import Position from "./GameEngine/EngineObject/Position/Position.class.js";
 
 
-const scene = new Scene();
-const kasernen_scene = new Scene();
-GameEngine.scene = scene;
+// const kasernen_scene = new Scene();
+// const scene = new Scene();
+// GameEngine.scene = scene;
+const scene = GameEngine.scene;
 
 const kaserne = new Menu();
 kaserne.backgroundColor = "orange";
@@ -29,7 +30,7 @@ kasernenMenu.setSize(1200, 600);
 kasernenMenu.setName("Kasernen Menu");
 // kasernenMenu.showName = true;
 kasernenMenu.backgroundColor = "black";
-kasernenMenu.position.set(100, 0);
+kasernenMenu.position.set(0, 0);
 kasernenMenu.visible = false;
 scene.appendChild(kasernenMenu);
 
@@ -44,8 +45,7 @@ const kasernenMenuExit = new Menu(kasernenMenu, "name");
 kasernenMenuExit.setSize(20, 20);
 kasernenMenuExit.backgroundColor = "red";
 kasernenMenuExit.staticPosition = true;
-kasernenMenuExit.position.set(100, 100);
-// kasernenMenuExit.position.set(kasernenMenu.width /2 - kasernenMenuExit.width/2 - 5, -kasernenMenu.height /2 + kasernenMenuExit.height/2 + 5);
+kasernenMenuExit.position.set(kasernenMenu.width - 15, 15);
 kasernenMenuExit.setName("x");
 kasernenMenuExit.showName = true;
 // kasernenMenuExit.showValue = true;
